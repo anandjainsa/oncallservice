@@ -1,5 +1,5 @@
 pipeline {
-	agent any
+    agent any
 
 /*    agent {
 
@@ -16,7 +16,7 @@ pipeline {
     }
 
     environment {
-	//  Define all variables
+        //  Define all variables
 
         // This can be nexus3 or nexus2
 
@@ -38,17 +38,17 @@ pipeline {
 
         NEXUS_CREDENTIAL_ID = "nexus"
 
-   	PROJECT = 'tpmgnew'
-	    
-   	APPNAME = 'my-first-microservice'
-	    
-   	SERVICENAME = "${appName}-backend"  
-	    
-   	IMAGEVERSION = 'development'
-	    
-   	NAMESPACE = 'development'
-	    
-  	IMAGETAG = "anandjain420/${PROJECT}:${IMAGEVERSION}.${env.BUILD_NUMBER}"   
+        PROJECT = 'tpmgnew'
+
+        APPNAME = 'my-first-microservice'
+
+        SERVICENAME = "${appName}-backend"
+
+        IMAGEVERSION = 'development'
+
+        NAMESPACE = 'development'
+
+        IMAGETAG = "anandjain420/${PROJECT}:${IMAGEVERSION}.${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -71,14 +71,14 @@ pipeline {
 
         }
 
-	stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
-		withSonarQubeEnv('sonar-6') { 
-          
-			sh "mvn sonar:sonar"
-		}
-	}
-    }
+                withSonarQubeEnv('sonar-6') {
+
+                    sh "mvn sonar:sonar"
+                }
+            }
+        }
         stage("publish to nexus") {
 
             steps {
@@ -111,43 +111,43 @@ pipeline {
 
                         nexusArtifactUploader(
 
-                            nexusVersion: NEXUS_VERSION,
+                                nexusVersion: NEXUS_VERSION,
 
-                            protocol: NEXUS_PROTOCOL,
+                                protocol: NEXUS_PROTOCOL,
 
-                            nexusUrl: NEXUS_URL,
+                                nexusUrl: NEXUS_URL,
 
-                            groupId: pom.groupId,
+                                groupId: pom.groupId,
 
-                            version: pom.version,
+                                version: pom.version,
 
-                            repository: NEXUS_REPOSITORY,
+                                repository: NEXUS_REPOSITORY,
 
-                            credentialsId: NEXUS_CREDENTIAL_ID,
+                                credentialsId: NEXUS_CREDENTIAL_ID,
 
-                            artifacts: [
+                                artifacts: [
 
-                                // Artifact generated such as .jar, .ear and .war files.
+                                        // Artifact generated such as .jar, .ear and .war files.
 
-                                [artifactId: pom.artifactId,
+                                        [artifactId: pom.artifactId,
 
-                                classifier: '',
+                                         classifier: '',
 
-                                file: artifactPath,
+                                         file: artifactPath,
 
-                                type: pom.packaging],
+                                         type: pom.packaging],
 
-                                // Lets upload the pom.xml file for additional information for Transitive dependencies
+                                        // Lets upload the pom.xml file for additional information for Transitive dependencies
 
-                                [artifactId: pom.artifactId,
+                                        [artifactId: pom.artifactId,
 
-                                classifier: '',
+                                         classifier: '',
 
-                                file: "pom.xml",
+                                         file: "pom.xml",
 
-                                type: "pom"]
+                                         type: "pom"]
 
-                            ]
+                                ]
 
                         );
 
@@ -164,46 +164,50 @@ pipeline {
         }
 
 // Build the docker Image
-	    
-	  stage('Building image') {
-		  
-		  steps {
-      
-			  sh("docker build -t ${IMAGETAG} .")
-		  }
-	  }
-  
-  //Push the image to docker registry
-	  stage('Push image to registry') {
-		  
-		  steps {
-		
-			  sh("docker push ${IMAGETAG}")
-	   }
-		  
-       }
-	    
-	  // Deploy Application
-  	stage('Deploy Application') {
-	
-		steps {
-		
-		       switch (NAMESPACE) {
-			      //Roll out to Dev Environment
-			      case "development":
-				   // Create namespace if it doesn't exist
-				   sh("kubectl get ns ${NAMESPACE} || kubectl create ns ${NAMESPACE}")
-			   //Update the imagetag to the latest version
-				   sh("sed -i.bak 's#anandjain420/${PROJECT}:${IMAGEVERSION}#${IMAGETAG}#' ./k8s/development/*.yaml")
-				   //Create or update resources
-			   sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/deployment.yaml")
-				   sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/service.yaml")
-	     }
-			
-       	  }
-       
-       }
-	    
+
+        stage('Building image') {
+
+            steps {
+
+                sh("docker build -t ${IMAGETAG} .")
+            }
+        }
+
+        //Push the image to docker registry
+        stage('Push image to registry') {
+
+            steps {
+
+                sh("docker push ${IMAGETAG}")
+            }
+
+        }
+
+        // Deploy Application
+        stage('Deploy Application') {
+
+            steps { 
+                
+                script {
+
+                switch (NAMESPACE) {
+                //Roll out to Dev Environment
+                    case "development":
+                        // Create namespace if it doesn't exist
+                        sh("kubectl get ns ${NAMESPACE} || kubectl create ns ${NAMESPACE}")
+                        //Update the imagetag to the latest version
+                        sh("sed -i.bak 's#anandjain420/${PROJECT}:${IMAGEVERSION}#${IMAGETAG}#' ./k8s/development/*.yaml")
+                        //Create or update resources
+                        sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/deployment.yaml")
+                        sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/service.yaml")
+                    }
+                
+                }
+
+            }
+
+        }
+
     }
 
 }
