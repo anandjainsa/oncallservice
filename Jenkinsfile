@@ -16,6 +16,7 @@ pipeline {
     }
 
     environment {
+	//  Define all variables
 
         // This can be nexus3 or nexus2
 
@@ -37,13 +38,17 @@ pipeline {
 
         NEXUS_CREDENTIAL_ID = "nexus"
 
-	//  Define all variables
-   	project = 'tpmgnew'
-   	appName = 'my-first-microservice'
-   	serviceName = "${appName}-backend"  
-   	imageVersion = 'development'
-   	namespace = 'development'
-  	imageTag = "anandjain420/${project}:${imageVersion}.${env.BUILD_NUMBER}"   
+   	PROJECT = 'tpmgnew'
+	    
+   	APPNAME = 'my-first-microservice'
+	    
+   	SERVICENAME = "${appName}-backend"  
+	    
+   	IMAGEVERSION = 'development'
+	    
+   	NAMESPACE = 'development'
+	    
+  	IMAGETAG = "anandjain420/${PROJECT}:${IMAGEVERSION}.${env.BUILD_NUMBER}"   
     }
 
     stages {
@@ -157,28 +162,26 @@ pipeline {
             }
 
         }
-//        stage("publish to nexus") {
 
-//            steps {
-
+// Build the docker Image
+	    
 	  stage('Building image') {
 		  
 		  steps {
       
-			  sh("docker build -t ${imageTag} .")
+			  sh("docker build -t ${IMAGETAG} .")
 		  }
 	  }
   
-  //Stage 2 : Push the image to docker registry
+  //Push the image to docker registry
 	  stage('Push image to registry') {
 		  
 		  steps {
 		
-			  sh("docker -- push ${imageTag}")
-		  }
-	  }
-	    
-//	    
+			  sh("docker push ${IMAGETAG}")
+	   }
+		  
+       }
 	    
     }
 
