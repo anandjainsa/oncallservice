@@ -59,6 +59,13 @@ pipeline {
 
         }
 
+	stage('SonarQube Analysis') {
+        
+		withSonarQubeEnv('sonar-6') { 
+          
+			sh "mvn sonar:sonar"
+        }
+    }
         stage("publish to nexus") {
 
             steps {
