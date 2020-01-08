@@ -1,10 +1,10 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: -deployment
+  name:-deployment
   namespace: development
   labels:
-    app: -app
+    app:-app
 spec:
   replicas: 1
   template:
