@@ -5,7 +5,7 @@ metadata:
   namespace: development
 spec:
   ports:
-      port: 8081
+    - port: 8081
   type: LoadBalancer    
   selector:
     apps: 
