@@ -1,19 +1,19 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: recruitment-service-deployment
+  name: -deployment
   namespace: development
   labels:
-    app: recruitment-service-app
+    app: -app
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        apps: recruitment-service
+        apps: 
     spec:
       containers:
-      - name: recruitment-service
+      - name: 
         image: anandjain420/tpmgnew:development
         ports:
         - containerPort: 8081
