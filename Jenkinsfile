@@ -218,7 +218,7 @@ def mavenBuild()
 
 def sonarRun(password)
 {
- withSonarQubeEnv(${password}) {
+ withSonarQubeEnv($password) {
 
         sh "mvn sonar:sonar"
     }
