@@ -59,11 +59,8 @@ pipeline {
 
                 script {
 
-                    // If you are using Windows then you should use "bat" step
 
-                    // Since unit testing is out of the scope we skip them
-
-                    sh "mvn package -DskipTests=true"
+                    mavenBuild();
 
                 }
 
@@ -73,10 +70,9 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar-6') {
 
-                    sh "mvn sonar:sonar"
-                }
+            sonarRun('sonar-6')
+
             }
         }
         stage("publish to nexus") {
@@ -156,7 +152,7 @@ pipeline {
                         error "*** File: ${artifactPath}, could not be found";
 
                     }
-
+ sh "mvn package -DskipTests=true"
                 }
 
             }
@@ -186,8 +182,8 @@ pipeline {
         // Deploy Application
         stage('Deploy Application') {
 
-            steps { 
-                
+            steps {
+
                 script {
 
                 switch (NAMESPACE) {
@@ -204,7 +200,7 @@ pipeline {
                         sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/deployment.yaml")
                         sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/service.yaml")
                     }
-                
+
                 }
 
             }
@@ -213,4 +209,17 @@ pipeline {
 
     }
 
+}
+
+def mavenBuild()
+{
+ sh "mvn package -DskipTests=true"
+}
+
+def sonarRun(password)
+{
+ withSonarQubeEnv(${password}) {
+
+        sh "mvn sonar:sonar"
+    }
 }
