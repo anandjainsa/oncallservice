@@ -184,7 +184,7 @@ pipeline {
 
             steps {
 
-             kubeDeploy($NAMESPACE, $APPNAME, $PROJECT, $IMAGEVERSION, $IMAGETAG)
+                kubeDeploy(${NAMESPACE}, ${APPNAME}, ${PROJECT}, ${IMAGEVERSION}, ${IMAGETAG})
 
             }
 
