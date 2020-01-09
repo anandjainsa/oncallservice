@@ -42,8 +42,6 @@ pipeline {
 
         APPNAME = 'my-first-microservice1'
 
-        SERVICENAME = "${appName}-backend"
-
         IMAGEVERSION = 'development'
 
         NAMESPACE = 'development'
