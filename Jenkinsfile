@@ -40,7 +40,7 @@ pipeline {
 
         PROJECT = 'tpmgnew'
 
-        APPNAME = 'my-first-microservice'
+        APPNAME = 'my-first-microservice1'
 
         SERVICENAME = "${appName}-backend"
 
@@ -79,7 +79,85 @@ pipeline {
 
             steps {
 
-                script {
+                publisToNexus()
+
+            }
+
+        }
+
+// Build the docker Image
+
+        stage('Building image') {
+
+            steps {
+
+                dockerBuild("${IMAGETAG}")
+            }
+        }
+
+        //Push the image to docker registry
+        stage('Push image to registry') {
+
+            steps {
+                dockerPush("${IMAGETAG}")
+               
+            }
+
+        }
+
+        // Deploy Application
+        stage('Deploy Application') {
+
+            steps {
+
+                kubeDeploy("${NAMESPACE}", "${APPNAME}", "${PROJECT}", "${IMAGEVERSION}", "${IMAGETAG}")
+
+            }
+
+        }
+
+    }
+
+}
+
+def mavenBuild()
+{
+ sh "mvn package -DskipTests=true"
+}
+
+def sonarRun(password)
+{
+ withSonarQubeEnv("$password") {
+
+        sh "mvn sonar:sonar"
+    }
+}
+
+def kubeDeploy(NAMESPACE, APPNAME, PROJECT, IMAGEVERSION, IMAGETAG) 
+{
+       script {
+
+                switch (NAMESPACE) {
+                //Roll out to Dev Environment
+                    case "development":
+                        // Create namespace if it doesn't exist
+                        sh("kubectl get ns ${NAMESPACE} || kubectl create ns ${NAMESPACE}")
+                        //Update the imagetag to the latest version
+                        sh("sed -i.bak 's#name:#name: ${APPNAME}#' ./k8s/development/*.yaml")
+                        sh("sed -i.bak 's#app:#app: ${APPNAME}#' ./k8s/development/*.yaml")
+                        sh("sed -i.bak 's#apps:#apps: ${APPNAME}#' ./k8s/development/*.yaml")
+                        sh("sed -i.bak 's#anandjain420/${PROJECT}:${IMAGEVERSION}#${IMAGETAG}#' ./k8s/development/*.yaml")
+                        //Create or update resources
+                        sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/deployment.yaml")
+                        sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/service.yaml")
+                    }
+
+                }
+}
+
+def publisToNexus()
+{
+    script {
 
                     // Read POM xml file using 'readMavenPom' step , this step 'readMavenPom' is included in: https://plugins.jenkins.io/pipeline-utility-steps
 
@@ -154,77 +232,15 @@ pipeline {
                     }
  sh "mvn package -DskipTests=true"
                 }
-
-            }
-
-        }
-
-// Build the docker Image
-
-        stage('Building image') {
-
-            steps {
-
-                sh("docker build -t ${IMAGETAG} .")
-            }
-        }
-
-        //Push the image to docker registry
-        stage('Push image to registry') {
-
-            steps {
-
-                sh("docker push ${IMAGETAG}")
-            }
-
-        }
-
-        // Deploy Application
-        stage('Deploy Application') {
-
-            steps {
-
-                kubeDeploy(${NAMESPACE}, ${APPNAME}, ${PROJECT}, ${IMAGEVERSION}, ${IMAGETAG})
-
-            }
-
-        }
-
-    }
-
 }
 
-def mavenBuild()
+def dockerBuild(IMAGETAG)
 {
- sh "mvn package -DskipTests=true"
+    sh("docker build -t ${IMAGETAG} .")
 }
 
-def sonarRun(password)
+
+def dockerPush(IMAGETAG)
 {
- withSonarQubeEnv("$password") {
-
-        sh "mvn sonar:sonar"
-    }
-}
-
-def kubeDeploy(NAMESPACE, APPNAME, PROJECT, IMAGEVERSION, IMAGETAG) 
-{
-       script {
-
-                switch (NAMESPACE) {
-                //Roll out to Dev Environment
-                    case "development":
-                        // Create namespace if it doesn't exist
-                        sh("kubectl get ns ${NAMESPACE} || kubectl create ns ${NAMESPACE}")
-                        //Update the imagetag to the latest version
-                        sh("sed -i.bak 's#name:#name: ${APPNAME}#' ./k8s/development/*.yaml")
-                        sh("sed -i.bak 's#app:#app: ${APPNAME}#' ./k8s/development/*.yaml")
-                        sh("sed -i.bak 's#apps:#apps: ${APPNAME}#' ./k8s/development/*.yaml")
-                        sh("sed -i.bak 's#anandjain420/${PROJECT}:${IMAGEVERSION}#${IMAGETAG}#' ./k8s/development/*.yaml")
-                        //Create or update resources
-                        sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/deployment.yaml")
-                        sh("kubectl --namespace=${NAMESPACE} apply -f k8s/development/service.yaml")
-                    }
-
-                }
+    sh("docker push ${IMAGETAG}")
 }
